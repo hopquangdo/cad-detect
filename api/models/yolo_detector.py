@@ -29,7 +29,8 @@ class YoloDetector:
         results = self.model.predict(
             source=img, imgsz=imagesize,
             device=self.device, verbose=True,
-            save=False, conf=0.1)
+            save=False, conf=0.1
+        )
 
         if len(results) == 0:
             print("No results returned from YOLO model.")
