@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
-from models.yolo_detector import YoloDetector
+from models.detector import Detector
 from models.ocr_reader import OcrReader
 from utils.image_utils import load_image_from_bytes
 from utils.response_format import format_final_output
@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-yolo_model = YoloDetector(model_path="best.pt", device='cpu')
+yolo_model = Detector(model_path="best.pt", device='cpu')
 
 ocr_reader = OcrReader()
 

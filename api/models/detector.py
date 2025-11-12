@@ -2,7 +2,7 @@ from ultralytics import YOLO
 from utils.image_utils import clamp_xyxy
 
 
-class YoloDetector:
+class Detector:
     def __init__(self, model_path="best.pt", device='cpu'):
         self.device = device
         self.model = YOLO(model_path)
