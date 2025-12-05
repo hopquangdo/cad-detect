@@ -12,6 +12,7 @@ interface CanvasAreaProps {
     selectedComponentId: string | null
     onSelectComponent: (id: string | null) => void
     onChangeImage: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onReset: () => void
 }
 
 const CanvasArea: React.FC<CanvasAreaProps> = ({
@@ -23,6 +24,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     selectedComponentId,
     onSelectComponent,
     onChangeImage,
+    onReset
 }) => {
     return (
         <div className="lg:col-span-2 flex flex-col min-h-0">
@@ -42,6 +44,13 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
                                 className="hidden"
                             />
                         </label>
+                        <button
+                            onClick={onReset}
+                            className="inline-flex items-center px-4 py-2 bg-transparent border border-gray-300 text-gray-700 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                        >
+                            Back
+                        </button>
+
                     </div>
                 </div>
                 <div className="flex-1 min-h-0">

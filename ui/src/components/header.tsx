@@ -5,7 +5,7 @@ export default function Header() {
                 <img src="/logo.jpg" alt="RDSIC Logo" className="w-14 h-14 object-contain" />
                 <div>
                     <h1 className="text-2xl font-bold text-black">
-                        AI SPC IIC
+                        AI SDC IIC
                     </h1>
                     <p className="text-sm text-gray-600 mt-1">
                         Upload your technical drawing to detect and annotate components

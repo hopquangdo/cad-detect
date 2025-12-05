@@ -9,6 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  basePath: '/ai-rdsic-ocr'
 }
 
 export default nextConfig

@@ -19,7 +19,6 @@ interface DrawingCanvasProps {
   components: Component[]
   onUpdateComponent: (id: string, updates: Partial<Component>) => void
   isDetecting: boolean
-  hoveredComponentId?: string | null
   selectedComponentId?: string | null
   onSelectComponent?: (id: string | null) => void
 }
@@ -29,7 +28,6 @@ export default function DrawingCanvas({
   components,
   onUpdateComponent,
   isDetecting,
-  hoveredComponentId,
   selectedComponentId,
   onSelectComponent,
 }: DrawingCanvasProps) {
@@ -47,6 +45,7 @@ export default function DrawingCanvas({
   const [draggedComponentStart, setDraggedComponentStart] = useState({ x: 0, y: 0 })
   const [minScale, setMinScale] = useState(0.1)
 
+  // Load image and set initial scale & offset
   useEffect(() => {
     const img = new Image()
     img.crossOrigin = "anonymous"
@@ -70,58 +69,46 @@ export default function DrawingCanvas({
     img.src = imageUrl
   }, [imageUrl])
 
+  // Draw function without hover logic
   const draw = useCallback(() => {
     const canvas = canvasRef.current
     const ctx = canvas?.getContext("2d")
     if (!canvas || !ctx || !image) return
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-
     ctx.save()
-
     ctx.translate(offset.x, offset.y)
     ctx.scale(scale, scale)
 
     ctx.drawImage(image, 0, 0)
 
     components.forEach((component) => {
-      const isHovered = hoveredComponentId === component.id
       const isSelected = selectedComponentId === component.id
 
-      if (isHovered) {
-        ctx.shadowColor = "#666666"
-        ctx.shadowBlur = 15 / scale
-        ctx.strokeStyle = "#666666"
+      if (isSelected) {
+        ctx.shadowColor = "rgba(79, 70, 229, 0.7)" // indigo-600
+        ctx.shadowBlur = 16 / scale
+        ctx.strokeStyle = "#3f689b" // indigo-600
         ctx.lineWidth = 4 / scale
-      } else if (isSelected) {
-        ctx.shadowColor = "#000000"
-        ctx.shadowBlur = 10 / scale
-        ctx.strokeStyle = "#000000"
-        ctx.lineWidth = 3 / scale
       } else {
+        ctx.strokeStyle = "#263f5d" // blue-400
+        ctx.lineWidth = 2.5 / scale
         ctx.shadowBlur = 0
-        ctx.strokeStyle = "#000000"
-        ctx.lineWidth = 2 / scale
       }
 
       ctx.strokeRect(component.x, component.y, component.width, component.height)
-
       ctx.shadowBlur = 0
 
-      ctx.fillStyle = isHovered
-        ? "rgba(102, 102, 102, 0.95)"
-        : isSelected
-          ? "rgba(0, 0, 0, 0.95)"
-          : "rgba(0, 0, 0, 0.9)"
       const labelPadding = 4 / scale
-      const fontSize = isHovered || isSelected ? 14 / scale : 12 / scale
-      ctx.font = `${isHovered || isSelected ? "bold" : "normal"} ${fontSize}px sans-serif`
+      const fontSize = isSelected ? 13 / scale : 12 / scale
+      ctx.font = `${isSelected ? "bold" : "normal"} ${fontSize}px sans-serif`
       const textWidth = ctx.measureText(component.name).width
+      ctx.fillStyle = isSelected ? "#3f689b" : "#263f5d"
       ctx.fillRect(
         component.x,
         component.y - fontSize - labelPadding * 2,
         textWidth + labelPadding * 2,
-        fontSize + labelPadding * 2,
+        fontSize + labelPadding * 2
       )
 
       ctx.fillStyle = "#ffffff"
@@ -137,7 +124,7 @@ export default function DrawingCanvas({
     }
 
     ctx.restore()
-  }, [image, scale, offset, components, currentBox, selectedComponentId, hoveredComponentId])
+  }, [image, scale, offset, components, currentBox, selectedComponentId])
 
   useEffect(() => {
     draw()
@@ -148,12 +135,10 @@ export default function DrawingCanvas({
       const canvas = canvasRef.current
       const container = containerRef.current
       if (!canvas || !container) return
-
       canvas.width = container.clientWidth
       canvas.height = container.clientHeight
       draw()
     }
-
     resizeCanvas()
     window.addEventListener("resize", resizeCanvas)
     return () => window.removeEventListener("resize", resizeCanvas)
@@ -161,17 +146,13 @@ export default function DrawingCanvas({
 
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault()
-
     const canvas = canvasRef.current
     if (!canvas) return
-
     const rect = canvas.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const mouseY = e.clientY - rect.top
-
     const delta = e.deltaY > 0 ? 0.9 : 1.1
     const newScale = Math.min(Math.max(minScale, scale * delta), 10)
-
     const scaleChange = newScale / scale
     setOffset({
       x: mouseX - (mouseX - offset.x) * scaleChange,
@@ -183,16 +164,14 @@ export default function DrawingCanvas({
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas || !image) return
-
     const rect = canvas.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const mouseY = e.clientY - rect.top
-
     const imageX = (mouseX - offset.x) / scale
     const imageY = (mouseY - offset.y) / scale
 
     const clickedComponent = components.find(
-      (c) => imageX >= c.x && imageX <= c.x + c.width && imageY >= c.y && imageY <= c.y + c.height,
+      (c) => imageX >= c.x && imageX <= c.x + c.width && imageY >= c.y && imageY <= c.y + c.height
     )
 
     if (clickedComponent) {
@@ -219,7 +198,6 @@ export default function DrawingCanvas({
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas || !image) return
-
     const rect = canvas.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const mouseY = e.clientY - rect.top
@@ -227,20 +205,14 @@ export default function DrawingCanvas({
     if (isDraggingComponent && selectedComponentId) {
       const imageX = (mouseX - offset.x) / scale
       const imageY = (mouseY - offset.y) / scale
-
       const newX = imageX - draggedComponentStart.x
       const newY = imageY - draggedComponentStart.y
-
       onUpdateComponent(selectedComponentId, { x: newX, y: newY })
     } else if (isDragging) {
-      setOffset({
-        x: mouseX - dragStart.x,
-        y: mouseY - dragStart.y,
-      })
+      setOffset({ x: mouseX - dragStart.x, y: mouseY - dragStart.y })
     } else if (isDrawing) {
       const imageX = (mouseX - offset.x) / scale
       const imageY = (mouseY - offset.y) / scale
-
       setCurrentBox({
         x: Math.min(drawStart.x, imageX),
         y: Math.min(drawStart.y, imageY),
@@ -261,11 +233,9 @@ export default function DrawingCanvas({
     const newScale = Math.min(scale * 1.2, 10)
     const canvas = canvasRef.current
     if (!canvas) return
-
     const centerX = canvas.width / 2
     const centerY = canvas.height / 2
     const scaleChange = newScale / scale
-
     setOffset({
       x: centerX - (centerX - offset.x) * scaleChange,
       y: centerY - (centerY - offset.y) * scaleChange,
@@ -277,11 +247,9 @@ export default function DrawingCanvas({
     const newScale = Math.max(scale * 0.8, minScale)
     const canvas = canvasRef.current
     if (!canvas) return
-
     const centerX = canvas.width / 2
     const centerY = canvas.height / 2
     const scaleChange = newScale / scale
-
     setOffset({
       x: centerX - (centerX - offset.x) * scaleChange,
       y: centerY - (centerY - offset.y) * scaleChange,
@@ -291,13 +259,11 @@ export default function DrawingCanvas({
 
   const handleResetView = () => {
     if (!image || !containerRef.current) return
-
     const container = containerRef.current
     const scaleX = (container.clientWidth - 40) / image.width
     const scaleY = (container.clientHeight - 40) / image.height
     const fitScale = Math.min(scaleX, scaleY)
     const initialScale = Math.max(minScale, fitScale)
-
     setScale(initialScale)
     setOffset({
       x: (container.clientWidth - image.width * initialScale) / 2,
